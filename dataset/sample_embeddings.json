@@ -1,0 +1,74 @@
+{
+  "dimension": 8,
+  "metric": "cosine",
+  "documents": [
+    {
+      "id": 1,
+      "title": "Introduction to Vector Databases and Embeddings",
+      "category": "technology",
+      "tags": ["ai", "vector-search", "database"],
+      "content": "Vector databases index high-dimensional embeddings to perform ultra-fast approximate nearest neighbor (ANN) similarity search across millions of documents.",
+      "vector": [0.820, 0.450, 0.250, 0.150, 0.050, 0.020, 0.010, 0.190]
+    },
+    {
+      "id": 2,
+      "title": "Building Large Language Model Agents with Memory",
+      "category": "technology",
+      "tags": ["ai", "llm", "agents"],
+      "content": "Autonomous agents utilize retrieval-augmented generation (RAG) and long-term vector memory to recall pertinent conversation context and past experiences.",
+      "vector": [0.790, 0.490, 0.220, 0.180, 0.020, 0.040, 0.030, 0.210]
+    },
+    {
+      "id": 3,
+      "title": "Modern Microservices Architecture on Kubernetes",
+      "category": "technology",
+      "tags": ["devops", "cloud", "containers"],
+      "content": "Container orchestration platforms like Kubernetes enable declarative deployment, horizontal scaling, and service meshes across cloud infrastructure.",
+      "vector": [0.650, 0.350, 0.550, 0.280, 0.100, 0.050, 0.080, 0.220]
+    },
+    {
+      "id": 4,
+      "title": "Traditional Neapolitan Pizza Dough Fermentation",
+      "category": "culinary",
+      "tags": ["pizza", "baking", "italian"],
+      "content": "Achieving an airy crust with blistered cornicione requires a 48-hour cold fermentation process, high hydration, and authentic Italian Caputo flour.",
+      "vector": [0.030, 0.080, 0.050, 0.120, 0.820, 0.510, 0.150, 0.120]
+    },
+    {
+      "id": 5,
+      "title": "The Art of Specialty Pour-Over Coffee Brewing",
+      "category": "culinary",
+      "tags": ["coffee", "barista", "beverages"],
+      "content": "Extracting nuanced floral and citrus flavor profiles from light roast single-origin beans depends heavily on grind size, water mineral content, and pouring technique.",
+      "vector": [0.050, 0.060, 0.080, 0.100, 0.780, 0.550, 0.200, 0.150]
+    },
+    {
+      "id": 6,
+      "title": "James Webb Space Telescope Deep Field Observations",
+      "category": "science",
+      "tags": ["space", "astronomy", "telescope"],
+      "content": "Infrared instruments aboard the JWST have detected early primordial galaxies formed merely a few hundred million years following the Big Bang.",
+      "vector": [0.120, 0.050, 0.080, 0.110, 0.140, 0.120, 0.820, 0.520]
+    },
+    {
+      "id": 7,
+      "title": "Search for Biosignatures on Exoplanet Atmospheres",
+      "category": "science",
+      "tags": ["space", "astrobiology", "planets"],
+      "content": "Transmission spectroscopy allows astronomers to analyze starlight filtering through exoplanet atmospheres to detect signs of water vapor, methane, and oxygen.",
+      "vector": [0.100, 0.040, 0.090, 0.130, 0.110, 0.150, 0.790, 0.560]
+    }
+  ],
+  "sample_queries": {
+    "technology_query": {
+      "prompt": "How do AI agents store and retrieve long-term contextual vector memory?",
+      "vector": [0.810, 0.470, 0.230, 0.160, 0.040, 0.030, 0.020, 0.200],
+      "expected_category": "technology"
+    },
+    "culinary_query": {
+      "prompt": "What are the secrets to brewing specialty filter coffee with light roasts?",
+      "vector": [0.040, 0.070, 0.060, 0.110, 0.800, 0.530, 0.180, 0.130],
+      "expected_category": "culinary"
+    }
+  }
+}

@@ -1,0 +1,150 @@
+version: "3.8"
+
+services:
+  # ============================================================================
+  # 1. Qdrant - High-performance Rust-based vector search engine
+  # ============================================================================
+  qdrant:
+    image: qdrant/qdrant:v1.12.1
+    container_name: vectordb-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   # REST API & Web Dashboard (http://localhost:6333/dashboard)
+      - "6334:6334"   # gRPC API
+    environment:
+      - QDRANT__SERVICE__ENABLE_CORS=true
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 2. Chroma - AI-native open-source embedding database
+  # ============================================================================
+  chroma:
+    image: chromadb/chroma:0.5.20
+    container_name: vectordb-chroma
+    restart: unless-stopped
+    ports:
+      - "8000:8000"   # REST API (http://localhost:8000/api/v1/heartbeat)
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    volumes:
+      - chroma_storage:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 3. PostgreSQL with pgvector - Relational database + vector extension
+  # ============================================================================
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: vectordb-pgvector
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${PGVECTOR_USER:-postgres}
+      POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD:-postgres}
+      POSTGRES_DB: ${PGVECTOR_DB:-vectordb}
+    volumes:
+      - pgvector_storage:/var/lib/postgresql/data
+      - ./pgvector/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGVECTOR_USER:-postgres} -d ${PGVECTOR_DB:-vectordb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 4. Weaviate - Cloud-native open-source vector search engine
+  # ============================================================================
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.27.0
+    container_name: vectordb-weaviate
+    restart: unless-stopped
+    ports:
+      - "8080:8080"   # REST API (http://localhost:8080/v1/meta)
+      - "50051:50051" # gRPC API
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: ''
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_storage:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 5. Milvus Standalone (with etcd and MinIO) - Scalable enterprise vector DB
+  # ============================================================================
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: vectordb-milvus-etcd
+    restart: unless-stopped
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_storage:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir=/etcd
+
+  minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: vectordb-milvus-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"   # MinIO Console
+    volumes:
+      - minio_storage:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  milvus:
+    image: milvusdb/milvus:v2.4.1
+    container_name: vectordb-milvus-standalone
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - milvus_storage:/var/lib/milvus
+    ports:
+      - "19530:19530" # gRPC API
+      - "9091:9091"   # Metrics API
+    depends_on:
+      - "etcd"
+      - "minio"
+
+volumes:
+  qdrant_storage:
+  chroma_storage:
+  pgvector_storage:
+  weaviate_storage:
+  etcd_storage:
+  minio_storage:
+  milvus_storage:
